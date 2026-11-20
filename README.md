@@ -74,6 +74,3 @@ Benchmark: primes below 1,000,000 (this can take a few seconds)
 - Service names are set in the `foreach` loop in the Services section. Edit that list to monitor other services.
 - If PowerShell blocks the script, the `-ExecutionPolicy Bypass` flag in the commands above applies only to that one run.
 
-## Project
-
-Made for the Hack Club Bashed "HomeLab" challenge.
