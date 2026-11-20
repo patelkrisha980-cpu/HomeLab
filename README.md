@@ -68,8 +68,6 @@ Benchmark: primes below 1,000,000 (this can take a few seconds)
   found 78,498 primes in 7.296s
 ```
 
-![Screenshot of the script output](screenshot.png)
-
 ## Notes
 
 - The script only reads system information. It does not change anything on your machine.
