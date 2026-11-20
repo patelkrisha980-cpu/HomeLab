@@ -2,7 +2,27 @@
 .SYNOPSIS
     Reports on the machine it runs on and runs a small benchmark.
     Works in Windows PowerShell 5.1 and PowerShell 7+ (Windows).
+
+.DESCRIPTION
+    Prints OS, CPU, memory and disk info, lists installed tools, shows the top
+    processes and key service status, then runs an optional prime-number
+    benchmark (skip it with -Quick).
+    
+.NOTES
+
+
+    File Name      : workspace_report.ps1
+    Prerequisites  : Windows PowerShell 5.1 or PowerShell 7+ (Windows).
+
+.LINK
+    GitHub         : https://patelkrisha980-cpu.github.io/HomeLab/
+
+.EXAMPLE
+    .\workspace_report.ps1 -Quick
+    Runs the report without the benchmark.
 #>
+
+param([switch]$Quick)
 
 Write-Host "=== System report ==="
 Write-Host ("Time (UTC):  {0:yyyy-MM-dd HH:mm:ss}" -f [DateTime]::UtcNow)
@@ -28,16 +48,34 @@ foreach ($tool in "python", "node", "git", "curl.exe", "ffmpeg", "pandoc") {
     Write-Host ("  {0,-10} {1}" -f $tool, $path)
 }
 
-Write-Host "`nBenchmark: primes below 1,000,000 (this can take a few seconds)"
-$limit = 1000000
-$timer = [System.Diagnostics.Stopwatch]::StartNew()
-$composite = New-Object bool[] $limit
-$count = 0
-for ($i = 2; $i -lt $limit; $i++) {
-    if (-not $composite[$i]) {
-        $count++
-        for ($j = [long]$i * $i; $j -lt $limit; $j += $i) { $composite[$j] = $true }
+Write-Host "`nTop 5 processes by memory:"
+Get-Process | Sort-Object WorkingSet -Descending | Select-Object -First 5 | ForEach-Object {
+    Write-Host ("  {0,-20} {1:N0} MB" -f $_.ProcessName, ($_.WorkingSet / 1MB))
+}
+
+Write-Host "`nServices:"
+foreach ($name in "Spooler", "EventLog", "WinDefend") {
+    $svc = Get-Service $name -ErrorAction SilentlyContinue
+    if ($svc -and $svc.Status -eq "Running") {
+        Write-Host ("  {0,-12} Running" -f $name) -ForegroundColor Green
+    } else {
+        Write-Host ("  {0,-12} Not running" -f $name) -ForegroundColor Red
     }
 }
-$timer.Stop()
-Write-Host ("  found {0:N0} primes in {1:N3}s" -f $count, $timer.Elapsed.TotalSeconds)
+
+if (-not $Quick) {
+
+   Write-Host "`nBenchmark: primes below 1,000,000 (this can take a few seconds)"
+   $limit = 1000000
+   $timer = [System.Diagnostics.Stopwatch]::StartNew()
+   $composite = New-Object bool[] $limit
+   $count = 0
+   for ($i = 2; $i -lt $limit; $i++) {
+       if (-not $composite[$i]) {
+           $count++
+           for ($j = [long]$i * $i; $j -lt $limit; $j += $i) { $composite[$j] = $true }
+       }
+   }
+   $timer.Stop()
+   Write-Host ("  found {0:N0} primes in {1:N3}s" -f $count, $timer.Elapsed.TotalSeconds)
+}
